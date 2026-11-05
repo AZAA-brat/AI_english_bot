@@ -7,7 +7,8 @@ async def init_db():
         CREATE TABLE IF NOT EXISTS users(
         telegram_id BIGINT PRIMARY KEY,
         mode TEXT NOT NULL DEFAULT 'Translate' CHECK( mode IN ('Translate', 'Grammar', 'Writing')),
-        language TEXT NOT NULL DEFAULT 'ru > en' CHECK( language IN ('ru > en', 'en > ru'))
+        language TEXT NOT NULL DEFAULT 'ru > en' CHECK( language IN ('ru > en', 'en > ru')),
+        name TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS messages(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,10 +26,10 @@ async def conn_db():
     await db.execute("PRAGMA foreign_keys = ON")
     return db
 
-async def add_user(telegram_id):
+async def add_user(telegram_id, name):
     db = await conn_db()
     try:
-        await db.execute("INSERT OR IGNORE INTO users(telegram_id) VALUES (?);", (telegram_id,))
+        await db.execute("INSERT OR IGNORE INTO users(telegram_id, name) VALUES (?, ?);", (telegram_id, name,))
         await db.commit()
     finally:
         await db.close()
@@ -53,7 +54,7 @@ async def update_user_settings(telegram_id, mode, language):
 async def save_message(telegram_id, role, text):
     db = await conn_db()
     try:
-        await db.execute("INSERT INTO messages(user_id, role, text) VALUES (?, ?, ?);", (telegram_id, role, text))
+        await db.execute("INSERT INTO messages(user_id, role, text) VALUES (?, ?, ?);", (telegram_id, role, text,))
         await db.commit()
     finally:
         await db.close()
